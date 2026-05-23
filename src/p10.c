@@ -70,7 +70,7 @@ void SPI_RENDER(uint8_t *frame)
                      : "r"(0)
                      : "memory");
         gpio_set(OE, 1);
-        sleep_us(1);
+        sleep_us(10);
         gpio_set(OE, 0);
     }
 }
@@ -103,7 +103,17 @@ void 单接口单向一路带数据(uint8_t *framein, uint8_t *frameout)
 }
 
 uint32_t frame_time;
+uint8_t frame_buffer[ARRAY_FRAME_SIZE];
+uint8_t recv_buffer[ARRAY_FRAME_SIZE + 8 + 6];
 #define FRAME_TIME_US 33366
+void p10_start_render_loop()
+{
+    while (1)
+    {
+        SPI_RENDER(frame_buffer);
+        rpi_yield();
+    }
+}
 void p10_start_server()
 {
     if (w5500_udp_open(1, 9800) < 0)
@@ -116,18 +126,14 @@ void p10_start_server()
     gpio_set_output(ADD_B);
     gpio_set_output(SCLK);
     printk("[p10] UDP socket opened\n");
-    uint8_t frame_buffer[ARRAY_FRAME_SIZE];
-    uint8_t recv_buffer[ARRAY_FRAME_SIZE + 8 + 6];
     memset(frame_buffer, 0xff, sizeof(frame_buffer));
     while (1)
     {
-        SPI_RENDER(frame_buffer);
         rpi_yield();
         int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8 + 6);
         if (recv == 0)
             continue;
         // printk("UDP recv time: %d ticks, render time: %d ticks\n", get_current_tick() - udp_time, udp_time - start);
-        rpi_yield();
         单接口单向一路带数据(recv_buffer + 8, frame_buffer);
     }
     // while (1)

@@ -24,5 +24,6 @@
 void 单接口单向一路带数据(uint8_t *framein, uint8_t *frameout);
 void SPI_RENDER(uint8_t *frame);
 void p10_start_server();
+void p10_start_render_loop();
 
 #endif

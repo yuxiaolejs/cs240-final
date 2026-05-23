@@ -64,7 +64,7 @@ void rpi_yield()
     uint32_t current_tick = get_current_usec();
     uint32_t lr = 0;
     asm volatile("mov %0, lr" : "=r"(lr));
-    if (current_tick - last_cs_tick > 15)
+    if (current_tick - last_cs_tick > 10)
     {
         printk("S: %d, from %d, lr=%x\n", current_tick - last_cs_tick, cur->tid, previous_lrs[cur->tid]);
     }
@@ -100,7 +100,8 @@ void rpi_thread_start()
 }
 void rpi_exit(uint32_t x)
 {
-    // trace("rpi exit\n");
+    trace("rpi exit\n");
+    rpi_reboot();
     cur->exited = true;
     rpi_yield();
     if (!x)

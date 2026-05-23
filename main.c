@@ -85,13 +85,17 @@ void main_loop()
 {
     while (1)
     {
+        rpi_yield();
+        uint32_t current_tick = get_current_tick();
+        if (current_tick == last_update_tick)
+            continue;
+        last_update_tick = current_tick;
         instrument_list *cur = main_head;
         while (cur)
         {
             tick_instrument(cur->inst);
             cur = cur->next;
         }
-        rpi_yield();
     }
 }
 
@@ -148,8 +152,9 @@ void notmain(void)
 
     *PTR_IRQ_ENABLE2 = (1u << 49 - 32); // enable GPIO IRQ
     // *PTR_IRQ_ENABLE_BASIC |= 1;         // timer
-    *PTR_GPFEN0 |= (1 << MIDI_PIN);     // enable falling edge detect for MIDI pin
+    *PTR_GPFEN0 |= (1 << MIDI_PIN); // enable falling edge detect for MIDI pin
     rpi_fork(p10_start_server, NULL);
+    rpi_fork(p10_start_render_loop, NULL);
     // p10_start_server();
     rpi_fork(main_loop, NULL);
     rpi_thread_start();
