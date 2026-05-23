@@ -63,9 +63,19 @@ float powf(float base, float exp)
     return expf_(exp * logf_(base));
 }
 
+float midi_to_hz_lookup_table[128];
+void midi_init()
+{
+    for (int i = 0; i < 128; i++)
+    {
+        midi_to_hz_lookup_table[i] = 440.0f * powf(2.0f, (i - 69) / 12.0f);
+    }
+}
+
 static inline float midi_to_hz(uint8_t n)
 {
-    return 440.0f * powf(2.0f, (n - 69) / 12.0f);
+    // return 440.0f * powf(2.0f, (n - 69) / 12.0f);
+    return midi_to_hz_lookup_table[n];
 }
 
 static inline void cycle_cnt_init(void)

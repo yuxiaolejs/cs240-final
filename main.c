@@ -41,7 +41,7 @@ void midi_apply(midi_event ev)
     if (head)
     {
         head->inst->period = TICK_RATE / ev.freq;
-        printk("%d freq: %d, duration: %d\n", ev.channel, ev.freq, 0);
+        // printk("%d freq: %d, duration: %d\n", ev.channel, ev.freq, 0);
     }
 }
 
@@ -100,7 +100,7 @@ void main_loop()
     {
         rpi_yield();
         uint32_t current_tick = get_current_tick();
-        if (current_tick == last_update_tick)
+        if (current_tick <= last_update_tick)
             continue;
         last_update_tick = current_tick;
         instrument_list *cur = main_head;
@@ -150,15 +150,16 @@ void notmain(void)
     interrupts_table_init();
     minispi_init();
     w5500_init();
+    midi_init();
     main_head = NULL;
     // head = make_floppy_inst(head, 24, 23);
-    // main_head = make_floppy_inst(main_head, 0, 1);
-    // main_head = make_hbridge_inst(main_head, 2, 3);
-    // main_head = make_hbridge_inst(main_head, 4, 5);
-    // main_head = make_hbridge_inst(main_head, 6, 7);
-    // main_head = make_hbridge_inst(main_head, 8, 9);
-    // main_head = make_hbridge_inst(main_head, 12, 13);
-    // head = make_floppy_inst(head, 20, 21);
+    main_head = make_hbridge_inst(main_head, 2, 3);
+    main_head = make_hbridge_inst(main_head, 4, 5);
+    main_head = make_hbridge_inst(main_head, 6, 7);
+    main_head = make_floppy_inst(main_head, 0, 1);
+    main_head = make_hbridge_inst(main_head, 8, 9);
+    main_head = make_hbridge_inst(main_head, 12, 13);
+    main_head = make_floppy_inst(main_head, 16, 17);
     // head = make_floppy_inst(head, 19, 26);
 
     enable_timer(1, TIMER_PRE_16); // 1000 * 256 / 250000000 = 1.024 ms per tick

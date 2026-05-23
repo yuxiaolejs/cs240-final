@@ -61,14 +61,14 @@ void t_push(rpi_thread_t *x)
 uint32_t previous_lrs[10];
 void rpi_yield()
 {
-    uint32_t current_tick = get_current_usec();
-    uint32_t lr = 0;
-    asm volatile("mov %0, lr" : "=r"(lr));
-    if (current_tick - last_cs_tick > 10)
-    {
-        printk("S: %d, from %d, lr=%x\n", current_tick - last_cs_tick, cur->tid, previous_lrs[cur->tid]);
-    }
-    previous_lrs[cur->tid] = lr;
+    // uint32_t current_tick = get_current_usec();
+    // uint32_t lr = 0;
+    // asm volatile("mov %0, lr" : "=r"(lr));
+    // if (current_tick - last_cs_tick > 10)
+    // {
+    //     printk("S: %d, from %d, lr=%x\n", current_tick - last_cs_tick, cur->tid, previous_lrs[cur->tid]);
+    // }
+    // previous_lrs[cur->tid] = lr;
     rpi_thread_t *next = t_pop();
     if (next)
     {
