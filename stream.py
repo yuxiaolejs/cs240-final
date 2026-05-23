@@ -10,7 +10,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 with open("badapple.bin", "rb") as f:
     while True:
-        sock.sendto(f.read(FRAME_SIZE), (UDP_IP, UDP_PORT))
+        sock.sendto(bytes([0x93]) + f.read(FRAME_SIZE), (UDP_IP, UDP_PORT))
         time.sleep(0.03)
         # time.sleep(0.03)
         print("Sent a frame to the server")

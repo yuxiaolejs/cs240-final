@@ -139,3 +139,31 @@ midi_event midi_scan(uint8_t gpio)
     }
     return (midi_event){-1, 0};
 }
+
+midi_event midi_parse(uint8_t b, uint8_t note)
+{
+    if (b == 0 || b == 0xFF)
+        return (midi_event){-1, 0}; // ignore invalid data
+    if (b >= 0xF8)
+        return (midi_event){-1, 0}; // real-time, ignore
+    midi_event res;
+    if (b & 0x80)
+    { // status byte
+        if (b >= 0x80 && b <= 0x9F)
+        { // Note Off / Note On
+            if (b < 0x90)
+            {
+                res.channel = b & 0x0F;
+                res.freq = 0;
+                return res;
+            }
+            else
+            {
+                res.channel = b & 0x0F;
+                res.freq = midi_to_hz(note);
+                return res;
+            }
+        }
+    }
+    return (midi_event){-1, 0};
+}

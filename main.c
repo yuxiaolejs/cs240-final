@@ -32,6 +32,19 @@ void interrupts_table_init(void)
     asm volatile("cpsie i" : : : "memory");
 }
 
+void midi_apply(midi_event ev)
+{
+    uint8_t shift = ev.channel;
+    instrument_list *head = main_head;
+    while (head && shift--)
+        head = head->next;
+    if (head)
+    {
+        head->inst->period = TICK_RATE / ev.freq;
+        printk("%d freq: %d, duration: %d\n", ev.channel, ev.freq, 0);
+    }
+}
+
 void irq_handler()
 {
     if (GET32(ADD_IRQ_PENDING2) & (1 << 17))

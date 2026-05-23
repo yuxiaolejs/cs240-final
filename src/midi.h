@@ -12,5 +12,6 @@ typedef struct midi_event
 //     return 440.0f * powf(2.0f, (n - 69) / 12.0f);
 // }
 midi_event midi_scan(uint8_t gpio);
+midi_event midi_parse(uint8_t b, uint8_t note);
 
 #endif

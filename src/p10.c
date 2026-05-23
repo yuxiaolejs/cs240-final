@@ -8,6 +8,7 @@
 #include "p10.h"
 #include "w5500.h"
 #include "instrument.h"
+#include "midi.h"
 
 void short_delay()
 {
@@ -130,28 +131,19 @@ void p10_start_server()
     while (1)
     {
         rpi_yield();
-        int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8 + 6);
+        int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8 + 6 + 1);
         if (recv == 0)
             continue;
         // printk("UDP recv time: %d ticks, render time: %d ticks\n", get_current_tick() - udp_time, udp_time - start);
-        单接口单向一路带数据(recv_buffer + 8, frame_buffer);
+        // printk("ctrl: %d\n", recv_buffer[8]);
+        if (recv_buffer[8] == 0x93)
+            单接口单向一路带数据(recv_buffer + 8 + 1, frame_buffer);
+        else if (recv_buffer[8] == 0x94)
+        {
+            midi_event ps = midi_parse(recv_buffer[8 + 1], recv_buffer[8 + 2]);
+            midi_apply(ps);
+        }
     }
-    // while (1)
-    // {
-    //     for (int group = 0; group < 4; group++)
-    //     {
-    //         gpio_set(OE, 0);
-    //         set_row_addr(group);
-    //         for (int x = 0; x < 2; x++)
-    //         {
-    //             int pixel = x % 2;
-    //             gpio_set(DATA, pixel);
-    //             pulse_clk();
-    //         }
-    //         pulse_lat();
-    //         gpio_set(OE, 1);
-    //     }
-    // }
 }
 
 // void notmain()
