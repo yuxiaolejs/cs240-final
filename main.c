@@ -2,7 +2,6 @@
 
 // https://www.songstuff.com/recording/article/music-fundamental-frequencies/
 #include "instrument.h"
-#include "song.h"
 #include "mem.h"
 #include "midi.h"
 #include "regs.h"
@@ -82,52 +81,11 @@ instrument_list *append_instrument(instrument_list *head, instrument_t *inst)
 uint32_t last_update_tick = 0;
 uint32_t last_update_idx = 0;
 
-inline void update_instruments_relative_tick(instrument_list *head)
-{
-    // real time midi play
-    return;
-    midi_event ev = midi_scan(MIDI_PIN);
-    printk("MIDI %d: %d Hz\n", ev.channel, ev.freq);
-    uint8_t shift = ev.channel + 1;
-    while (head && shift--)
-        head = head->next;
-    if (head && (ev.freq > 270 || ev.freq == 0))
-    {
-        head->inst->period = TICK_RATE / ev.freq;
-        // printk("%d: %d freq: %d, duration: %d\n", last_update_idx, current_note.channel, current_note.freq, current_note.duration_ms);
-    }
-    return;
-    // below is playing from recorded source
-    uint32_t tick = get_current_tick();
-    note_t current_note = song[last_update_idx];
-    while ((int64_t)tick - (int64_t)last_update_tick >= current_note.delay_ms * (TICK_RATE / 1000))
-    {
-
-        last_update_idx++;
-        uint8_t shift = current_note.channel;
-        while (head && shift--)
-            head = head->next;
-        if (head && (current_note.freq > 270 || current_note.freq == 0))
-        {
-            head->inst->period = TICK_RATE / current_note.freq;
-            // printk("%d: %d freq: %d, duration: %d\n", last_update_idx, current_note.channel, current_note.freq, current_note.duration_ms);
-        }
-        if (last_update_idx >= song_len)
-        {
-            last_update_idx = 0; // loop the song
-        }
-        current_note = song[last_update_idx];
-        last_update_tick += current_note.delay_ms * (TICK_RATE / 1000);
-        tick = get_current_tick();
-    }
-}
-
 void main_loop()
 {
     while (1)
     {
         instrument_list *cur = main_head;
-        // update_instruments_relative_tick(main_head);
         while (cur)
         {
             tick_instrument(cur->inst);

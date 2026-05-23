@@ -31,7 +31,7 @@ COMMON_OBJS += ./src/sched.o
 # Set CFLAGS with USB includes FIRST before including Makefile.gcc
 
 
-TARGETS := main.bin
+TARGETS := main.bin badapple.bin
 
 include $(DMODE_ROOT)/lib/scripts/Makefile.gcc
 include $(DMODE_ROOT)/lib/scripts/Makefile.ld
@@ -40,6 +40,9 @@ all: lib  $(TARGETS)
 
 lib:
 	$(MAKE) -C $(DMODE_ROOT)/lib
+
+badapple.bin: badapple.mp4
+	python3 convert.py
 
 
 clean:

@@ -11,7 +11,7 @@
 
 void short_delay()
 {
-    delay_us(1);
+    sleep_us(1);
 }
 
 void gpio_set(int pin, int value)
@@ -70,7 +70,7 @@ void SPI_RENDER(uint8_t *frame)
                      : "r"(0)
                      : "memory");
         gpio_set(OE, 1);
-        delay_us(10);
+        sleep_us(10);
         gpio_set(OE, 0);
     }
 }

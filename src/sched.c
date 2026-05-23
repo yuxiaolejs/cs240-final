@@ -149,8 +149,9 @@ void sleep_ms(uint32_t ms)
 
 void sleep_us(uint32_t us)
 {
-    uint32_t end_time = timer_get_usec_raw() + us;
-    while (timer_get_usec_raw() < end_time)
-    {
-    }
+    cycle_cnt_init();
+    uint32_t start = cycle_cnt_read();
+    uint32_t cycles_to_wait = us * 700; // Assuming a 700MHz CPU
+    uint32_t deadline = start + cycles_to_wait;
+    yield_until_ddl(deadline);
 }
