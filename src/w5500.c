@@ -47,6 +47,18 @@ int w5500_xfer(uint16_t addr, uint8_t block, uint8_t is_write, uint8_t *data, ui
     return 0; // TODO: error handling for
 }
 
+int w5500_xfer_zero_cpy(uint16_t addr, uint8_t block, uint8_t is_write, uint8_t *xfer_buffer, uint16_t len)
+{
+    xfer_buffer[0] = (addr >> 8) & 0xFF;
+    xfer_buffer[1] = addr & 0xFF;
+    xfer_buffer[2] = (block << 3) | (is_write ? W5500_WRITE : W5500_READ) | W5500_VDM;
+    if (is_write)
+        minispi_xfern(xfer_buffer, len + 3);
+    else
+        minispi_xfern(xfer_buffer, len + 3);
+    return 0; // TODO: error handling for
+}
+
 int w5500_probe(void)
 {
     uint8_t version = 0;
@@ -135,9 +147,9 @@ void w5500_write8(uint16_t addr, uint8_t block, uint8_t v)
 
 uint16_t w5500_read16(uint16_t addr, uint8_t block)
 {
-    uint8_t b[2];
-    w5500_xfer(addr, block, 0, b, 2);
-    return ((uint16_t)b[0] << 8) | b[1];
+    uint8_t b[5];
+    w5500_xfer_zero_cpy(addr, block, 0, b, 2);
+    return ((uint16_t)b[3] << 8) | b[4];
 }
 
 void w5500_write16(uint16_t addr, uint8_t block, uint16_t v)

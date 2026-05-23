@@ -120,9 +120,7 @@ void p10_start_server()
     memset(frame_buffer, 0xff, sizeof(frame_buffer));
     while (1)
     {
-        uint32_t start = get_current_tick(); // update tick for W5500 xfer timing debug
         SPI_RENDER(frame_buffer);
-        uint32_t udp_time = get_current_tick();
         rpi_yield();
         int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8);
         if (recv == 0)

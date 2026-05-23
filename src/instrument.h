@@ -50,9 +50,14 @@ typedef struct
 
 } hbridge_instrument_t;
 
-static inline uint32_t get_current_tick()
+static inline volatile uint32_t get_current_tick()
 {
-    return *((uint32_t *)0x20003004) / 10;
+    return *((volatile uint32_t *)0x20003004) / 10;
+}
+
+static inline volatile uint32_t get_current_usec()
+{
+    return *((volatile uint32_t *)0x20003004);
 }
 
 #define TICK_RATE 100000 // 100k usec clock

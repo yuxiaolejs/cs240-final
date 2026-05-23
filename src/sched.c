@@ -60,12 +60,11 @@ void t_push(rpi_thread_t *x)
 }
 void rpi_yield()
 {
-    uint32_t current_tick = get_current_tick();
-    if (current_tick - last_cs_tick > 2)
+    uint32_t current_tick = get_current_usec();
+    if (current_tick - last_cs_tick > 10)
     {
         printk("S: %d, from %d\n", current_tick - last_cs_tick, cur->tid);
     }
-    last_cs_tick = get_current_tick();
     rpi_thread_t *next = t_pop();
     if (next)
     {
@@ -77,6 +76,7 @@ void rpi_yield()
         cur = next;
         t_cs(old, next);
     }
+    last_cs_tick = get_current_usec();
 }
 
 rpi_thread_t *rpi_cur_thread()

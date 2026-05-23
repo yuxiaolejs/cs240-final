@@ -64,7 +64,7 @@ void minispi_xfern(uint8_t *buf, uint32_t len)
     uint32_t tx_i = 0, rx_i = 0;
     while (rx_i < len)
     {
-        if (rx_i % 10 == 0)
+        if (rx_i % 50 == 0)
             rpi_yield();
         if (tx_i < len && minispi_ok_to_send())
         {

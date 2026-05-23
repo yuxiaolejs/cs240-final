@@ -113,6 +113,8 @@ void spi_txn_dma(uint8_t *buf, uint32_t len)
     spi_dma_cb.reserved1 = 0;
     spi_dma_cb.reserved2 = 0;
 
+    rpi_yield();
+
     spi_dma_cb_rx.ti = DMA_TI_SPI_RX;
     spi_dma_cb_rx.source_ad = 0x7E204004;
     spi_dma_cb_rx.dest_ad = 0;
@@ -122,15 +124,19 @@ void spi_txn_dma(uint8_t *buf, uint32_t len)
     spi_dma_cb_rx.reserved1 = 0;
     spi_dma_cb_rx.reserved2 = 0;
 
+    rpi_yield();
+
     *SPI_CS_REG |= SPI_CS_DMAEN | SPI_CS_TA;
     MK_REG(DMA_CONBLK_AD_REG(0)) = ARM_TO_DMA_BUS(&spi_dma_cb);
     MK_REG(DMA_CS_REG(0)) = DMA_CS_ACTIVE;
     MK_REG(DMA_CONBLK_AD_REG(1)) = ARM_TO_DMA_BUS(&spi_dma_cb_rx);
     MK_REG(DMA_CS_REG(1)) = DMA_CS_ACTIVE;
     while (!(MK_REG(DMA_CS_REG(0)) & DMA_CS_END))
-        ;
+        rpi_yield();
+
     while (!(*SPI_CS_REG & (1 << 16)))
-        ;
+        rpi_yield();
+
     *SPI_CS_REG &= ~(1 << 7);
 }
 
