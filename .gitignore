@@ -1,0 +1,9 @@
+*.elf
+*.bin
+*.list
+*.o
+uspi
+*.tar
+backup
+*.mp4
+*.mid
