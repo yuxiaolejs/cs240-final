@@ -29,33 +29,12 @@ static void _5500_parse_ip(char *ip_str, uint8_t *ip_bytes)
 
 int w5500_xfer(uint16_t addr, uint8_t block, uint8_t is_write, uint8_t *data, uint16_t len)
 {
-    uint8_t *xfer_buffer = kalloc(len + 3);
+    uint8_t xfer_buffer[3];
     xfer_buffer[0] = (addr >> 8) & 0xFF;
     xfer_buffer[1] = addr & 0xFF;
     xfer_buffer[2] = (block << 3) | (is_write ? W5500_WRITE : W5500_READ) | W5500_VDM;
-    if (is_write)
-    {
-        memcpy(xfer_buffer + 3, data, len);
-        minispi_xfern(xfer_buffer, len + 3);
-    }
-    else
-    {
-        minispi_xfern(xfer_buffer, len + 3);
-        memcpy(data, xfer_buffer + 3, len);
-    }
-    kfree(xfer_buffer);
-    return 0; // TODO: error handling for
-}
-
-int w5500_xfer_zero_cpy(uint16_t addr, uint8_t block, uint8_t is_write, uint8_t *xfer_buffer, uint16_t len)
-{
-    xfer_buffer[0] = (addr >> 8) & 0xFF;
-    xfer_buffer[1] = addr & 0xFF;
-    xfer_buffer[2] = (block << 3) | (is_write ? W5500_WRITE : W5500_READ) | W5500_VDM;
-    if (is_write)
-        minispi_xfern(xfer_buffer, len + 3);
-    else
-        minispi_xfern(xfer_buffer, len + 3);
+    minispi_xfern_no_end(xfer_buffer, 3);
+    minispi_xfern(data, len);
     return 0; // TODO: error handling for
 }
 
@@ -147,9 +126,9 @@ void w5500_write8(uint16_t addr, uint8_t block, uint8_t v)
 
 uint16_t w5500_read16(uint16_t addr, uint8_t block)
 {
-    uint8_t b[5];
-    w5500_xfer_zero_cpy(addr, block, 0, b, 2);
-    return ((uint16_t)b[3] << 8) | b[4];
+    uint8_t b[2];
+    w5500_xfer(addr, block, 0, b, 2);
+    return ((uint16_t)b[0] << 8) | b[1];
 }
 
 void w5500_write16(uint16_t addr, uint8_t block, uint16_t v)

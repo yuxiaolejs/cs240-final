@@ -64,7 +64,7 @@ void minispi_xfern(uint8_t *buf, uint32_t len)
     uint32_t tx_i = 0, rx_i = 0;
     while (rx_i < len)
     {
-        if (rx_i % 50 == 0)
+        if (rx_i % 5 == 0)
             rpi_yield();
         if (tx_i < len && minispi_ok_to_send())
         {
@@ -73,6 +73,27 @@ void minispi_xfern(uint8_t *buf, uint32_t len)
                 *MINISPI_IO_REG = word;
             else
                 *MINISPI_TXHOLD_REG = word;
+            tx_i++;
+        }
+        if (minispi_ok_to_recv())
+        {
+            buf[rx_i] = *MINISPI_IO_REG & 0xFF;
+            rx_i++;
+        }
+    }
+}
+
+void minispi_xfern_no_end(uint8_t *buf, uint32_t len)
+{
+    uint32_t tx_i = 0, rx_i = 0;
+    while (rx_i < len)
+    {
+        if (rx_i % 5 == 0)
+            rpi_yield();
+        if (tx_i < len && minispi_ok_to_send())
+        {
+            uint32_t word = (8u << 24) | ((uint32_t)buf[tx_i] << 16);
+            *MINISPI_TXHOLD_REG = word;
             tx_i++;
         }
         if (minispi_ok_to_recv())

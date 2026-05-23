@@ -68,7 +68,6 @@ uint8_t w5500_read8(uint16_t addr, uint8_t block);
 void w5500_write8(uint16_t addr, uint8_t block, uint8_t v);
 uint16_t w5500_read16(uint16_t addr, uint8_t block);
 void w5500_write16(uint16_t addr, uint8_t block, uint16_t v);
-void w5500_read_buf(uint16_t addr, uint8_t block, uint8_t *buf, uint16_t len);
 void w5500_write_buf(uint16_t addr, uint8_t block, const uint8_t *buf, uint16_t len);
 int w5500_sock_cmd(uint8_t sock, uint8_t cmd);
 int w5500_udp_open(uint8_t sock, uint16_t local_port);
