@@ -21,6 +21,9 @@ except ImportError:
     sys.stderr.write("need mido: pip install mido\n")
     sys.exit(1)
 
+low_notes = [0] * 4
+high_notes = [0] * 2
+
 
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "big_badapple.mid"
@@ -40,13 +43,47 @@ def main():
         for msg in mid.play():
             # if msg.channel != 3:
             #     continue  # ignore events not on channel 3 (p10.c only listens to channel 3)
-            if msg.type == "note_on" and msg.velocity > 0 and not is_on:
-                status = 0x90 | (msg.channel & 0x0F)
+            if msg.type == "note_on" and msg.velocity > 0:
+                # is this high? by A4
+                is_high = msg.note >= 60
+                found = -1
+                if not is_high:
+                    for i in range(len(low_notes)):
+                        if low_notes[i] == 0:
+                            low_notes[i] = msg.note
+                            found = i
+                            break
+                else:
+                    for i in range(len(high_notes)):
+                        if high_notes[i] == 0:
+                            high_notes[i] = msg.note
+                            found = i + len(low_notes)
+                            break
+                if found == -1:
+                    print(f"warning: no free {'high' if is_high else 'low'} note slots for MIDI note {msg.note}")
+                    continue
+                status = 0x90 | (found & 0x0F)
                 sock.sendto(bytes([0x94, status, msg.note]), (ip, port))
                 sent += 1
             elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
-                is_on = 0
-                status = 0x80 | (msg.channel & 0x0F)
+                is_high = msg.note >= 60
+                found = -1
+                if not is_high:
+                    for i in range(len(low_notes)):
+                        if low_notes[i] == msg.note:
+                            low_notes[i] = 0
+                            found = i
+                            break
+                else:
+                    for i in range(len(high_notes)):
+                        if high_notes[i] == msg.note:
+                            high_notes[i] = 0
+                            found = i + len(low_notes)
+                            break
+                if found == -1:
+                    print(f"warning: note-off for unknown {'high' if is_high else 'low'} note {msg.note}")
+                    continue
+                status = 0x80 | (found & 0x0F)
                 sock.sendto(bytes([0x94, status, msg.note]), (ip, port))
                 sent += 1
             # other event types (program change, control change, meta, etc.)

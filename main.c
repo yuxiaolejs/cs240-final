@@ -153,13 +153,12 @@ void notmain(void)
     midi_init();
     main_head = NULL;
     // head = make_floppy_inst(head, 24, 23);
-    main_head = make_hbridge_inst(main_head, 2, 3);
-    main_head = make_hbridge_inst(main_head, 4, 5);
-    main_head = make_hbridge_inst(main_head, 6, 7);
-    main_head = make_floppy_inst(main_head, 0, 1);
-    main_head = make_hbridge_inst(main_head, 8, 9);
-    main_head = make_hbridge_inst(main_head, 12, 13);
-    main_head = make_floppy_inst(main_head, 16, 17);
+    main_head = make_floppy_inst(main_head, 2, 3);
+    main_head = make_floppy_inst(main_head, 4, 5);
+    main_head = make_floppy_inst(main_head, 6, 7);
+    main_head = make_floppy_inst(main_head, 8, 9);
+    main_head = make_hbridge_inst(main_head, 26, 27);
+    main_head = make_hbridge_inst(main_head, 00, 1);
     // head = make_floppy_inst(head, 19, 26);
 
     enable_timer(1, TIMER_PRE_16); // 1000 * 256 / 250000000 = 1.024 ms per tick
