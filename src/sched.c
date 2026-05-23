@@ -61,8 +61,9 @@ void t_push(rpi_thread_t *x)
 void rpi_yield()
 {
     uint32_t current_tick = get_current_tick();
-    if (current_tick - last_cs_tick > 2){
-        printk(" too fucking slow: %d, from %d\n", current_tick - last_cs_tick, cur->tid);
+    if (current_tick - last_cs_tick > 2)
+    {
+        printk("S: %d, from %d\n", current_tick - last_cs_tick, cur->tid);
     }
     last_cs_tick = get_current_tick();
     rpi_thread_t *next = t_pop();
@@ -84,6 +85,7 @@ rpi_thread_t *rpi_cur_thread()
 }
 void rpi_thread_start()
 {
+    cycle_cnt_init();
     trace("starting threads!\n");
     rpi_yield();
     // trace("Came back from first huh\n");
@@ -132,26 +134,17 @@ void rpi_fork(void (*func)(void *), void *args_ptr)
     trace("rpi_fork: tid=%d, code=\n", t->tid);
     t_push(t);
 }
-void yield_until_ddl(uint32_t deadline)
-{
-    while (cycle_cnt_read() < deadline)
-        rpi_yield();
-}
 
 void sleep_ms(uint32_t ms)
 {
-    cycle_cnt_init();
     uint32_t start = cycle_cnt_read();
-    uint32_t cycles_to_wait = ms * 700000; // Assuming a 700MHz CPU
-    uint32_t deadline = start + cycles_to_wait;
-    yield_until_ddl(deadline);
+    while (cycle_cnt_read() - start < ms * 700000) // Assuming a 700MHz CPU
+        rpi_yield();
 }
 
 void sleep_us(uint32_t us)
 {
-    cycle_cnt_init();
     uint32_t start = cycle_cnt_read();
-    uint32_t cycles_to_wait = us * 700; // Assuming a 700MHz CPU
-    uint32_t deadline = start + cycles_to_wait;
-    yield_until_ddl(deadline);
+    while (cycle_cnt_read() - start < us * 700) // Assuming a 700MHz CPU
+        rpi_yield();
 }
