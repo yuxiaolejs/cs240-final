@@ -110,11 +110,11 @@ uint8_t recv_buffer[ARRAY_FRAME_SIZE + 8 + 6];
 
 #define TEXT_MOD_COLS 64
 #define TEXT_MOD_ROWS 48
-#include "font_t.h"
+#include "font_4x8.h"
 uint32_t text_x = 0;
 uint32_t text_y = 0;
-uint32_t p10_font_rows = teletext[0];
-uint32_t p10_font_cols = teletext[1];
+uint32_t p10_font_rows = font4x8[0];
+uint32_t p10_font_cols = font4x8[1];
 
 void put_pixel(uint32_t x, uint32_t y, uint8_t color)
 {
@@ -161,7 +161,7 @@ void text_mode_render(char *str)
             for (uint32_t r = 0; r < p10_font_rows; r++)
                 for (uint32_t c = 0; c < p10_font_cols; c++)
                 {
-                    uint8_t pixel_on = teletext[2 + (*str - 0x20) * p10_font_rows + r] & (1 << (p10_font_cols - 1 - c));
+                    uint8_t pixel_on = font4x8[2 + (*str - 0x20) * p10_font_rows + r] & (1 << (p10_font_cols - 1 - c));
                     put_pixel(text_x + c, text_y + r, pixel_on ? 1 : 0);
                 }
             text_x += p10_font_cols;
@@ -199,7 +199,7 @@ void p10_start_server()
     gpio_set_output(ADD_B);
     gpio_set_output(SCLK);
     printk("[p10] UDP socket opened\n");
-    text_mode_render("+p10+ UDP socket opened\n");
+    text_mode_render("UDP ready@9800\n");
     char ip_str[16];
     w5500_get_ip(ip_str);
     text_mode_render(ip_str);
