@@ -40,6 +40,7 @@ def main():
     try:
         # mid.play() is a real-time generator: it sleeps between events
         # internally so messages come out paced to wall-clock time.
+        last_frame = time.time()
         for msg in mid.play():
             # if msg.channel != 3:
             #     continue  # ignore events not on channel 3 (p10.c only listens to channel 3)
