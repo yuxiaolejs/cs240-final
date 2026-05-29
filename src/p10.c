@@ -256,7 +256,7 @@ void p10_start_server()
     while (1)
     {
         // printk("SPI STATUS %b, CH1_CS: %b, len %d, dma2_ctrl: %x, should be: %x, xfer len: %d\n", MK_REG(0x20204000) >> 16, MK_REG(0x20007100), MK_REG(0x2020400c), MK_REG(DMA_CONBLK_AD_REG(1)), spi_dma_cb_rx_addr, spi_dma_cb_rx.txfr_len);
-        printk("FB ADD: %x\n", spi_dma_cb.source_ad);
+        // printk("FB ADD: %x\n", spi_dma_cb.source_ad);
         rpi_yield();
         int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8 + 6 + 1);
         if (recv == 0)
