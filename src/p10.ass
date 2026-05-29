@@ -41,11 +41,12 @@
 1064: movw $0x7e007104, spi_dma_cb_rx_addr
 1065: mov $0x7e007100, #3
 
-@ 1066: mov 1067.1, row
-@ 1067: mult p10_offset_table, #4
+1066: mov 1067.1, row
+1067: mult p10_offset_table.16, #4
 @ 1068: and 1069, #3
 @ 1069: mov spi_dma_cb.4
-@ 1069: movw spi_dma_cb.4, p10_offset_table
+1068: movw 1069, p10_offset_table.16
+1069: movw spi_dma_cb.4
 
 1070: jdma spi_dma_cb
 @ while (!*SPI_CS_REG & SPI_CS_DONE);

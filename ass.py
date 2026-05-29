@@ -142,8 +142,8 @@ def assemble(cbs: Dict[str, CB]):
         elif arg.startswith("$"):  # immediate address (raw, assume bus)
             return f"{arg[1:]} + {side}"
         elif arg in cbs:  # label
-            if expect_word:
-                raise ValueError(f"label {arg} cannot be used as a word argument")
+            # if expect_word:
+                # raise ValueError(f"label {arg} cannot be used as a word argument")
             # find index of label
             idx = find_idx_by_label(arg)
             return f"ARM_TO_DMA_BUS(&cb[{idx}].{position}) + {side}"
