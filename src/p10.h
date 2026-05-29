@@ -21,6 +21,8 @@
 #define ARRAY_HEIGHT_P10 3
 #define ARRAY_FRAME_SIZE (ARRAY_WIDTH_P10 * ARRAY_HEIGHT_P10 * P10_FRAME_SIZE)
 
+#define SPI_XFER_SIZE (ARRAY_FRAME_SIZE / 4)
+
 void 单接口单向一路带数据(uint8_t *framein, uint8_t *frameout);
 void SPI_RENDER(uint8_t *frame);
 void p10_start_server();

@@ -115,6 +115,9 @@ void spi_txn_dma(uint8_t *buf, uint32_t len)
 
     rpi_yield();
 
+    printk("OVERWRITING DMA CB! BAD!\n");
+    rpi_reboot();
+
     spi_dma_cb_rx.ti = DMA_TI_SPI_RX;
     spi_dma_cb_rx.source_ad = 0x7E204004;
     spi_dma_cb_rx.dest_ad = 0;

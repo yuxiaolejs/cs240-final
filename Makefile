@@ -1,6 +1,6 @@
 .PHONY: all lib usb clean
 
-DMODE_ROOT := $(abspath ../cs140e/dmode)
+DMODE_ROOT := $(abspath ../dmode)
 
 # MEMMAP := $(abspath memmap.ld)
 
@@ -25,6 +25,7 @@ COMMON_OBJS += ./src/timer.o
 COMMON_OBJS += ./src/vm.o
 COMMON_OBJS += ./src/vms.o
 COMMON_OBJS += ./src/sched.o
+COMMON_OBJS += ./src/dma.o
 
 # USB include path - MUST come before library includes
 
@@ -43,6 +44,9 @@ lib:
 
 badapple.bin: badapple.mp4
 	python3 convert.py
+
+src/dma.c: src/p10.ass ass.py
+	python3 ass.py src/p10.ass > src/dma.c
 
 
 clean:

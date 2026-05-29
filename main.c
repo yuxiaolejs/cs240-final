@@ -167,7 +167,7 @@ void notmain(void)
     // *PTR_IRQ_ENABLE_BASIC |= 1;         // timer
     *PTR_GPFEN0 |= (1 << MIDI_PIN); // enable falling edge detect for MIDI pin
     rpi_fork(p10_start_server, NULL);
-    rpi_fork(p10_start_render_loop, NULL);
+    // rpi_fork(p10_start_render_loop, NULL);
     // p10_start_server();
     rpi_fork(main_loop, NULL);
     rpi_thread_start();

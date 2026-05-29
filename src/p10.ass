@@ -1,0 +1,108 @@
+@ DMA render for P10
+
+@@ 0000 = set row addr
+@ word_temp = 0
+0000: mov word_temp.0, #0
+0001: mov word_temp.1, #0
+0002: mov word_temp.2, #0
+0003: mov word_temp.3, #0
+@ word_temp.2 = row << 6  -> bit22 = ADD_A = row&1, bit23 = ADD_B = (row>>1)&1
+0004: mov 0010.1, row
+0010: lsh word_temp.2, #6
+@ GPSET0 = word_temp  (drive the selected ADD bits high)
+0020: movw $0x7e20001C, word_temp
+@ word_temp.2 ^= 0b11000000  -> the complement ADD bits to drive low
+0030: mov 0040.1, word_temp.2
+0040: xor word_temp.2, #0b11000000
+@ GPCLR0 = word_temp
+0050: movw $0x7e200028, word_temp
+
+@@ 1000 = SPI xfer init
+@ *SPI_CS_REG |= (3 << 4); // clear TX RX
+1000: movw word_temp, $0x7e204000
+1001: mov 1010.1, word_temp
+1010: orr word_temp, #0b110000
+1020: movw $0x7e204000, word_temp
+@ *SPI_DLEN_REG = 64; // 64 bytes per frame
+1030: mov word_temp.0, #96
+1031: mov word_temp.1, #0
+1032: mov word_temp.2, #0
+1033: mov word_temp.3, #0
+1034: movw $0x7e20400c, word_temp
+@ *SPI_CS_REG |= SPI_CS_DMAEN | SPI_CS_TA;
+1040: movw word_temp, $0x7e204000
+1041: mov 1050.1, word_temp
+1050: orr word_temp, #0b10000000
+1060: mov 1062.1, word_temp.1
+1062: orr word_temp.1, #1
+1063: movw $0x7e204000, word_temp
+
+@ start RX drain DMA on channel 1
+1064: movw $0x7e007104, spi_dma_cb_rx_addr
+1065: mov $0x7e007100, #3
+
+@ 1066: mov 1067.1, row
+@ 1067: mult p10_offset_table, #4
+@ 1068: and 1069, #3
+@ 1069: mov spi_dma_cb.4
+@ 1069: movw spi_dma_cb.4, p10_offset_table
+
+1070: jdma spi_dma_cb
+@ while (!*SPI_CS_REG & SPI_CS_DONE);
+1080: mov 1090.1, $0x7e204002
+1090: and 1100, #1
+1100: bez 1080
+@ *SPI_CS_REG &= ~(1 << 7);
+1110: movw word_temp, $0x7e204000
+1111: mov 1120.1, word_temp
+1120: and word_temp, #0b01111111
+1130: movw $0x7e204000, word_temp
+
+@@ 2000 = pulse latch and OE
+@ word_temp = 0, then byte3 = 1 (pin 24 = SCLK)
+2000: mov word_temp.0, #0
+2001: mov word_temp.1, #0
+2002: mov word_temp.2, #0
+2003: mov word_temp.3, #1
+@ pin 24 high (GPSET0 full word write)
+2004: movw $0x7e20001C, word_temp
+@ delay 1 us, start in e
+1c10: mov e, $0x7e003004 
+1c20: mov 1c40.1, e
+1c30: mov 1c40.0, $0x7e003004
+1c40: sub 1c50
+1c50: bez 1c20
+@ pin 24 low
+2010: movw $0x7e200028, word_temp  
+@ delay 1 us, start in e
+2c10: mov e, $0x7e003004 
+2c20: mov 2c40.1, e
+2c30: mov 2c40.0, $0x7e003004
+2c40: sub 2c50
+2c50: bez 2c20
+@ pin 25 high (OE): byte3 = 2
+2020: mov word_temp.3, #2
+2021: movw $0x7e20001C, word_temp  
+@ delay 1 us, start in e
+3c10: mov e, $0x7e003005 
+3c20: mov 3c40.1, e
+3c30: mov 3c40.0, $0x7e003005
+3c40: sub 3c50
+3c50: bez 3c20
+@ pin 25 low
+2030: movw $0x7e200028, word_temp  
+
+@@ 3000 = wrap up
+@ row = (row + 1) % 4
+3000: mov 3010.1, row
+3010: add 3020.1, #1
+3020: and 3030, #3 
+3030: mov row
+
+@ 1039: j 13030
+4000: j 0000 @ loop
+
+114514: jdma p10_offset_table
+114515: jdma spi_dma_cb_rx_addr
+
+13030: mov row

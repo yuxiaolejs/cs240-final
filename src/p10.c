@@ -9,6 +9,7 @@
 #include "w5500.h"
 #include "instrument.h"
 #include "midi.h"
+#include "dma.h"
 
 void short_delay()
 {
@@ -185,6 +186,10 @@ void p10_start_render_loop()
         rpi_yield();
     }
 }
+__attribute__((aligned(32))) dma_cb_t spi_dma_cb;
+__attribute__((aligned(32))) dma_cb_t spi_dma_cb_rx;
+__attribute__((aligned(256))) dma_cb_t p10_offset_table;
+__attribute__((aligned(256))) dma_cb_t spi_dma_cb_rx_addr;
 void p10_start_server()
 {
     memset(frame_buffer, 0xff, sizeof(frame_buffer));
@@ -209,8 +214,41 @@ void p10_start_server()
     w5500_get_gateway(ip_str);
     text_mode_render("\n");
     text_mode_render(ip_str);
+
+    spi_dma_cb.ti = DMA_TI_SPI_TX;
+    spi_dma_cb.source_ad = ARM_TO_DMA_BUS(frame_buffer);
+    spi_dma_cb.dest_ad = 0x7E204004;
+    spi_dma_cb.txfr_len = SPI_XFER_SIZE;
+    spi_dma_cb.stride = 0;
+    spi_dma_cb.nextconbk = 0;
+    spi_dma_cb.reserved1 = 0;
+    spi_dma_cb.reserved2 = 0;
+
+    spi_dma_cb_rx.ti = DMA_TI_SPI_RX;
+    spi_dma_cb_rx.source_ad = 0x7E204004;
+    spi_dma_cb_rx.dest_ad = 0;
+    spi_dma_cb_rx.txfr_len = SPI_XFER_SIZE;
+    spi_dma_cb_rx.stride = 0;
+    spi_dma_cb_rx.nextconbk = 0;
+    spi_dma_cb_rx.reserved1 = 0;
+    spi_dma_cb_rx.reserved2 = 0;
+
+    // MK_REG(0x20007ff0) |= (1 << 1); // DMA_ENABLE: channel 1
+    // MK_REG(DMA_CONBLK_AD_REG(1)) = ARM_TO_DMA_BUS(&spi_dma_cb_rx);
+    *((uint32_t *)&spi_dma_cb_rx_addr) = ARM_TO_DMA_BUS(&spi_dma_cb_rx);
+
+    uint32_t *p10_offset_table_u32 = (uint32_t *)&p10_offset_table;
+    *p10_offset_table_u32 = ARM_TO_DMA_BUS((uint8_t)&frame_buffer);
+    *(p10_offset_table_u32 + 1) = ARM_TO_DMA_BUS((uint8_t)&frame_buffer + 96);
+    *(p10_offset_table_u32 + 2) = ARM_TO_DMA_BUS((uint8_t)&frame_buffer + 96 * 2);
+    *(p10_offset_table_u32 + 3) = ARM_TO_DMA_BUS((uint8_t)&frame_buffer + 96 * 3);
+
+    run_dma();
+    printk("DMA RUNNING\n");
+    printk("TFLEN %d\n",spi_dma_cb_rx.txfr_len);
     while (1)
     {
+        // printk("SPI STATUS %b, CH1_CS: %b, len %d, dma2_ctrl: %x, should be: %x, xfer len: %d\n", MK_REG(0x20204000) >> 16, MK_REG(0x20007100), MK_REG(0x2020400c), MK_REG(DMA_CONBLK_AD_REG(1)), spi_dma_cb_rx_addr, spi_dma_cb_rx.txfr_len);
         rpi_yield();
         int recv = w5500_udp_recv_one(1, recv_buffer, ARRAY_FRAME_SIZE + 8 + 6 + 1);
         if (recv == 0)
