@@ -1,5 +1,6 @@
 #include "osc.h"
 #include "mem.h"
+#include <stdarg.h>
 
 #define M32_PORT 10023
 uint8_t dst_ip_src[4] = {10, 0, 5, 15};
@@ -46,12 +47,6 @@ void m32_set_fader(uint8_t fader_id, float value)
     else
         sprintf(msg1, "/ch/%d/mix/fader", fader_id);
     uint32_t msg_len = encode_message(msg2, msg1, "f", value);
-    // printk("Sending msg:");
-    // for (uint32_t i = 0; i < msg_len; i++)
-    // {
-    //     printk("%x ", (uint8_t)msg2[i]);
-    // }
-    // printk("\n");
     memcpy(dst_ip, dst_ip_src, 4);
     if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
     {
@@ -85,6 +80,71 @@ void m32_set_on(uint8_t fader_id, uint8_t value)
     }
     kfree(msg1);
     kfree(msg2);
+}
+
+void m32_chann_ctrl(uint8_t chann, char *ctrl, char *type, ...)
+{
+    va_list args;
+    va_start(args, type);
+    char *msg1 = kalloc(100);
+    char *msg2 = kalloc(100);
+    if (chann < 10)
+        sprintf(msg1, "/ch/0%d/%s", chann, ctrl);
+    else
+        sprintf(msg1, "/ch/%d/%s", chann, ctrl);
+    printk("Control path: %s\n", msg1);
+    uint32_t msg_len = encode_message_va(msg2, msg1, type, args);
+    memcpy(dst_ip, dst_ip_src, 4);
+    if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
+    {
+        printk("m32_chann_ctrl send failed for channel %d\n", chann);
+        return;
+    }
+    delay_ms(50);
+    kfree(msg1);
+    kfree(msg2);
+    va_end(args);
+}
+
+void m32_headamp_ctrl(uint8_t chann, char *ctrl, char *type, ...)
+{
+    va_list args;
+    va_start(args, type);
+    char *msg1 = kalloc(100);
+    char *msg2 = kalloc(100);
+    if (chann < 10)
+        sprintf(msg1, "/headamp/00%d/%s", chann, ctrl);
+    else if (chann < 100)
+        sprintf(msg1, "/headamp/0%d/%s", chann, ctrl);
+    else
+        sprintf(msg1, "/headamp/%d/%s", chann, ctrl);
+    printk("Control path: %s\n", msg1);
+    uint32_t msg_len = encode_message_va(msg2, msg1, type, args);
+    memcpy(dst_ip, dst_ip_src, 4);
+    if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
+    {
+        printk("m32_headamp_ctrl send failed for channel %d\n", chann);
+        return;
+    }
+    delay_ms(50);
+    kfree(msg1);
+    kfree(msg2);
+    va_end(args);
+}
+
+void m32_channel_init(uint8_t chann)
+{
+    printk("Initializing channel %d\n", chann);
+    m32_chann_ctrl(chann, "mix/fader", "f", 0.0f);
+    m32_chann_ctrl(chann, "mix/on", "i", 0);
+    m32_chann_ctrl(chann, "eq/on", "i", 0);
+    m32_chann_ctrl(chann, "dyn/on", "i", 0);
+    m32_chann_ctrl(chann, "gate/on", "i", 0);
+    m32_chann_ctrl(chann, "delay/on", "i", 0);
+    m32_chann_ctrl(chann, "preamp/trim", "f", 0.0f);
+    m32_chann_ctrl(chann, "config/name", "s", "cs240lx");
+    m32_chann_ctrl(chann, "config/color", "i", 2);
+    m32_headamp_ctrl(chann - 1, "gain", "f", 0.5f);
 }
 
 void m32_unsub()
@@ -135,7 +195,7 @@ float m32_get_meter(uint8_t fader_id)
     char *msg1 = kalloc(100);
     char *msg2 = kalloc(100);
     float output = 0.0f;
-    uint32_t msg_len = encode_message(msg2, "/meters", "siii", "/meters/0",0,0,99);
+    uint32_t msg_len = encode_message(msg2, "/meters", "siii", "/meters/0", 0, 0, 99);
     // printk("Sending msg get meter:");
     // for (uint32_t i = 0; i < msg_len; i++)
     // {
@@ -184,10 +244,7 @@ void m32_prob()
     printk("Mapped 0 dB to %d\n", (int8_t)(mapped * 100));
     for (uint8_t i = 1; i < 9; i++)
     {
-        m32_set_on(i, 0);
-        m32_set_fader(i, mapped);
-        int mtr = fl_to_db(m32_get_meter(i));
-        printk("Got meter: %d\n", mtr);
+        m32_channel_init(i);
     }
 
     // m32_set_fader(1, 0.8250);

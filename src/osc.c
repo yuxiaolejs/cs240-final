@@ -3,10 +3,8 @@
 #include "cstr.h"
 #include <stdarg.h>
 
-uint32_t encode_message(char *buf, char *path, char *types, ...)
+uint32_t encode_message_va(char *buf, char *path, char *types, va_list args)
 {
-    va_list args;
-    va_start(args, types);
     uint32_t path_len = strlen(path) + 1;
     uint32_t current_offset = path_len;
     memcpy(buf, path, path_len);
@@ -58,6 +56,14 @@ uint32_t encode_message(char *buf, char *path, char *types, ...)
         }
         types++;
     }
+    return current_offset;
+}
+
+uint32_t encode_message(char *buf, char *path, char *types, ...)
+{
+    va_list args;
+    va_start(args, types);
+    uint32_t current_offset = encode_message_va(buf, path, types, args);
     va_end(args);
     return current_offset;
 }
