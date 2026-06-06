@@ -184,6 +184,7 @@ int w5500_udp_open(uint8_t sock, uint16_t local_port)
 int w5500_write_tx_buffer_safe(uint8_t sock, uint16_t offset, const uint8_t *data, uint16_t len)
 {
     uint8_t tx_block = BSB_SOCK_TX(sock);
+    offset = offset % W5500_SOCK_BUF_SIZE;   // Sn_TX_WR is a free-running 16-bit counter; mask to buffer
     if (offset + len > W5500_SOCK_BUF_SIZE)
     {
         uint16_t first = W5500_SOCK_BUF_SIZE - offset;
