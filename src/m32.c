@@ -100,7 +100,7 @@ void m32_chann_ctrl(uint8_t chann, char *ctrl, char *type, ...)
         printk("m32_chann_ctrl send failed for channel %d\n", chann);
         return;
     }
-    delay_ms(50);
+    delay_ms(100);
     kfree(msg1);
     kfree(msg2);
     va_end(args);
@@ -245,6 +245,10 @@ void m32_prob()
     for (uint8_t i = 1; i < 9; i++)
     {
         m32_channel_init(i);
+    }
+    for (uint8_t i = 1; i < 9; i++)
+    {
+        m32_chann_ctrl(i, "mix/on", "i", 1);
     }
 
     // m32_set_fader(1, 0.8250);
