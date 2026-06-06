@@ -217,6 +217,7 @@ int w5500_udp_sendto(uint8_t sock, const uint8_t dst_ip[4], uint16_t dst_port, c
 
     wr += len;
     w5500_write16(Sn_TX_WR, reg, wr);
+    w5500_write8(Sn_IR, reg, Sn_IR_SENDOK | Sn_IR_TIMEOUT);  // flush stale flags before sending
     w5500_sock_cmd(sock, CR_SEND);
 
     while (1)
@@ -229,6 +230,7 @@ int w5500_udp_sendto(uint8_t sock, const uint8_t dst_ip[4], uint16_t dst_port, c
         }
         if (ir & Sn_IR_TIMEOUT)
         {
+            printk("w5500_udp_sendto: timeout, Sn_IR=0x%x\n", ir);
             w5500_write8(Sn_IR, reg, Sn_IR_TIMEOUT);
             return -1;
         }

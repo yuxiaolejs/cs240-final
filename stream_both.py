@@ -25,11 +25,11 @@ except ImportError:
 UDP_IP = sys.argv[1] if len(sys.argv) > 1 else "10.0.10.183"
 UDP_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 9800
 FRAME_SIZE = 384
-FRAME_PERIOD = 1 / 30
+FRAME_PERIOD = 1 / 29.97
 FRAME_FILE = "badapple.bin"
 MIDI_FILE = "dong-fangbad-apple-feat-nomico-ver-20.mid"
 
-AUDIO_DELAY = 0.6
+AUDIO_DELAY = 0.8
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 stop = threading.Event()

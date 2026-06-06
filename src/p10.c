@@ -186,6 +186,10 @@ void p10_start_render_loop()
         rpi_yield();
     }
 }
+void auto_tune_sequence()
+{
+    m32_prob();
+}
 __attribute__((aligned(32))) dma_cb_t spi_dma_cb;
 __attribute__((aligned(32))) dma_cb_t spi_dma_cb_rx;
 __attribute__((aligned(256))) dma_cb_t p10_offset_table;
@@ -203,17 +207,6 @@ void p10_start_server()
     gpio_set_output(ADD_A);
     gpio_set_output(ADD_B);
     gpio_set_output(SCLK);
-    printk("[p10] UDP socket opened\n");
-    text_mode_render("UDP ready@9800\n");
-    char ip_str[16];
-    w5500_get_ip(ip_str);
-    text_mode_render(ip_str);
-    w5500_get_subnet(ip_str);
-    text_mode_render("\n");
-    text_mode_render(ip_str);
-    w5500_get_gateway(ip_str);
-    text_mode_render("\n");
-    text_mode_render(ip_str);
 
     spi_dma_cb.ti = DMA_TI_SPI_TX;
     spi_dma_cb.source_ad = 0;
@@ -247,12 +240,24 @@ void p10_start_server()
 
     for (int i = 0; i < 4; i++)
     {
-        printk("fb gt: %x at %x\n", p10_offset_table_u32[i],&p10_offset_table_u32[i]);
+        printk("fb gt: %x at %x\n", p10_offset_table_u32[i], &p10_offset_table_u32[i]);
     }
 
     run_dma();
     printk("DMA RUNNING\n");
     printk("TFLEN %d\n", spi_dma_cb_rx.txfr_len);
+    auto_tune_sequence();
+    printk("[p10] UDP socket opened\n");
+    text_mode_render("UDP ready@9800\n");
+    char ip_str[16];
+    w5500_get_ip(ip_str);
+    text_mode_render(ip_str);
+    w5500_get_subnet(ip_str);
+    text_mode_render("\n");
+    text_mode_render(ip_str);
+    w5500_get_gateway(ip_str);
+    text_mode_render("\n");
+    text_mode_render(ip_str);
     while (1)
     {
         // printk("SPI STATUS %b, CH1_CS: %b, len %d, dma2_ctrl: %x, should be: %x, xfer len: %d\n", MK_REG(0x20204000) >> 16, MK_REG(0x20007100), MK_REG(0x2020400c), MK_REG(DMA_CONBLK_AD_REG(1)), spi_dma_cb_rx_addr, spi_dma_cb_rx.txfr_len);

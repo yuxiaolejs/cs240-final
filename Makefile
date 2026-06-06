@@ -1,6 +1,8 @@
 .PHONY: all lib usb clean
 
-DMODE_ROOT := $(abspath ../dmode)
+# DMODE_ROOT := $(abspath ../dmode)
+DMODE_ROOT := /home/unics/Desktop/cs140e/cs140e/dmode
+
 
 # MEMMAP := $(abspath memmap.ld)
 
@@ -26,6 +28,7 @@ COMMON_OBJS += ./src/vm.o
 COMMON_OBJS += ./src/vms.o
 COMMON_OBJS += ./src/sched.o
 COMMON_OBJS += ./src/dma.o
+COMMON_OBJS += ./src/m32.o
 
 # USB include path - MUST come before library includes
 
