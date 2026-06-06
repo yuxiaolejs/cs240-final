@@ -46,14 +46,13 @@ void m32_set_fader(uint8_t fader_id, float value)
     else
         sprintf(msg1, "/ch/%d/mix/fader", fader_id);
     uint32_t msg_len = encode_message(msg2, msg1, "f", value);
-    printk("Sending msg:");
-    for (uint32_t i = 0; i < msg_len; i++)
-    {
-        printk("%x ", (uint8_t)msg2[i]);
-    }
-    printk("\n");
+    // printk("Sending msg:");
+    // for (uint32_t i = 0; i < msg_len; i++)
+    // {
+    //     printk("%x ", (uint8_t)msg2[i]);
+    // }
+    // printk("\n");
     memcpy(dst_ip, dst_ip_src, 4);
-    printk("Dest IP: %d.%d.%d.%d\n", dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
     if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
     {
         printk("faderUDP send failed for fader %d\n", fader_id);
@@ -72,20 +71,38 @@ void m32_set_on(uint8_t fader_id, uint8_t value)
     else
         sprintf(msg1, "/ch/%d/mix/on", fader_id);
     uint32_t msg_len = encode_message(msg2, msg1, "i", value);
-    printk("Sending msg:");
-    for (uint32_t i = 0; i < msg_len; i++)
-    {
-        printk("%x ", (uint8_t)msg2[i]);
-    }
-    printk("\n");
+    // printk("Sending msg:");
+    // for (uint32_t i = 0; i < msg_len; i++)
+    // {
+    //     printk("%x ", (uint8_t)msg2[i]);
+    // }
+    // printk("\n");
     memcpy(dst_ip, dst_ip_src, 4);
-    printk("Dest IP: %d.%d.%d.%d\n", dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
     if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
     {
         printk("on off send failed for fader %d\n", fader_id);
         return;
     }
     kfree(msg1);
+    kfree(msg2);
+}
+
+void m32_unsub()
+{
+    char *msg2 = kalloc(100);
+    uint32_t msg_len = encode_message(msg2, "/unsubscribe", "");
+    // printk("Sending unsub msg:");
+    // for (uint32_t i = 0; i < msg_len; i++)
+    // {
+    //     printk("%x ", (uint8_t)msg2[i]);
+    // }
+    // printk("\n");
+    memcpy(dst_ip, dst_ip_src, 4);
+    if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
+    {
+        printk("unsubscribe send failed\n");
+        return;
+    }
     kfree(msg2);
 }
 
@@ -118,27 +135,22 @@ float m32_get_meter(uint8_t fader_id)
     char *msg1 = kalloc(100);
     char *msg2 = kalloc(100);
     float output = 0.0f;
-    uint32_t msg_len = encode_message(msg2, "/meters", "s", "/meters/0");
-    printk("Sending msg:");
-    for (uint32_t i = 0; i < msg_len; i++)
-    {
-        printk("%x ", (uint8_t)msg2[i]);
-    }
-    printk("\n");
+    uint32_t msg_len = encode_message(msg2, "/meters", "siii", "/meters/0",0,0,99);
+    // printk("Sending msg get meter:");
+    // for (uint32_t i = 0; i < msg_len; i++)
+    // {
+    //     printk("%x ", (uint8_t)msg2[i]);
+    // }
+    // printk("\n");
     memcpy(dst_ip, dst_ip_src, 4);
     if (w5500_udp_sendto(0, dst_ip, M32_PORT, (const uint8_t *)msg2, msg_len) < 0)
     {
         printk("meterUDP send failed for fader %d\n", fader_id);
         return output;
     }
+    delay_ms(100);
+    m32_unsub();
     uint8_t rdata[600], rpath[100], rtypes[100];
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
-    m32_recv(rpath, rtypes, rdata);
     m32_recv(rpath, rtypes, rdata);
     memcpy(&output, rdata + 4 * fader_id, sizeof(float));
     kfree(msg1);
@@ -168,16 +180,14 @@ void m32_prob()
     printk("recv path: %s, types: %s, data: %d %d %d %d\n", rpath, rtypes, rdata[0], rdata[1], rdata[2], rdata[3]);
 
     delay_ms(100);
-    float mapped = db_to_fl(0.0f);
+    float mapped = db_to_fl(-99);
     printk("Mapped 0 dB to %d\n", (int8_t)(mapped * 100));
     for (uint8_t i = 1; i < 9; i++)
     {
-        m32_set_on(i, 1);
+        m32_set_on(i, 0);
         m32_set_fader(i, mapped);
-        m32_get_meter(i);
-        m32_get_meter(i);
-        m32_get_meter(i);
-        printk("Got meter\n");
+        int mtr = fl_to_db(m32_get_meter(i));
+        printk("Got meter: %d\n", mtr);
     }
 
     // m32_set_fader(1, 0.8250);
