@@ -124,7 +124,7 @@ uint32_t decode_message(char *buf, char *path, char *types, uint8_t *data)
         case 'b':
         {
             uint32_t blob_len = (buf[offset] << 24) | (buf[offset + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3];
-            printk("[osc decode] blob len: %d\n", blob_len);
+            // printk("[osc decode] blob len: %d\n", blob_len);
             offset += 4;
             for(uint32_t j = 0; j < blob_len; j++)
                 data[data_offset++] = buf[offset + j];
