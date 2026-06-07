@@ -104,7 +104,7 @@ void m32_chann_ctrl(uint8_t chann, char *ctrl, char *type, ...)
         printk("m32_chann_ctrl send failed for channel %d\n", chann);
         return;
     }
-    delay_ms(10);
+    sleep_ms(10);
     kfree(msg1);
     kfree(msg2);
     va_end(args);
@@ -131,7 +131,7 @@ void m32_headamp_ctrl(uint8_t chann, char *ctrl, char *type, ...)
         printk("m32_headamp_ctrl send failed for channel %d\n", chann);
         return;
     }
-    delay_ms(10);
+    sleep_ms(10);
     kfree(msg1);
     kfree(msg2);
     va_end(args);
@@ -201,7 +201,7 @@ void m32_recv(uint8_t *path, uint8_t *types, uint8_t *data)
             // printk("Received UDP packet: '%s'\n", buf + 8);
             break;
         }
-        delay_ms(100);
+        sleep_ms(100);
     }
     kfree(buf);
 }
@@ -234,6 +234,8 @@ float m32_get_meter(uint8_t fader_id)
     return output;
 }
 
+uint8_t channels_occupied[32] = {0};
+
 void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
 {
     printk("[midi tune %d] Tuning channel %d\n", midi_chann, midi_chann);
@@ -244,19 +246,21 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
     // find m32 channel corresponding to midi
     int chann = -1;
     float max_meter = -1000.0f;
-    sleep_ms(100);
-    for (int i = 1; i <= 8; i++)
+    sleep_ms(500);
+    for (int i = 1; i <= 16; i++)
     {
+        if (channels_occupied[i])
+            continue;
         printk("[midi tune %d] Checking M32 channel %d\n", midi_chann, i);
         float meter = fl_to_db(m32_get_meter(i));
-        printk("[midi tune %d] M32 channel %d meter: %d dB\n", midi_chann, i, (int)(meter * 100));
+        printk("[midi tune %d] M32 channel %d meter: %d mB\n", midi_chann, i, (int)(meter * 100));
         if (meter > max_meter && meter > -70.0f) // require at least -70 dB to consider it a match
         {
             max_meter = meter;
             chann = i;
         }
     }
-    printk("[midi tune %d] MIDI channel %d mapped to M32 channel %d with meter %d dB\n", midi_chann, midi_chann, chann, (int)(max_meter * 100));
+    printk("[midi tune %d] MIDI channel %d mapped to M32 channel %d with meter %d mB\n", midi_chann, midi_chann, chann, (int)(max_meter * 100));
     if (chann == -1)
     {
         printk("[midi tune %d] No channel found for MIDI channel %d\n", midi_chann, midi_chann);
@@ -267,15 +271,20 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
     float db_diff = target_db - max_meter;
     if (db_diff > 10 || db_diff < -90)
     {
-        printk("[midi tune %d] Unreasonable target dB %d for MIDI channel %d with current meter %d, diff is %d\n", midi_chann, (int)(target_db * 100), midi_chann, (int)(max_meter * 100), (int)(db_diff * 100));
+        printk("[midi tune %d] Unreasonable target mB %d for MIDI channel %d with current meter %d, diff is %d\n", midi_chann, (int)(target_db * 100), midi_chann, (int)(max_meter * 100), (int)(db_diff * 100));
         ev.freq = 0;
         midi_apply(ev);
         return;
     }
     else
-        printk("[midi tune %d] Adjusting M32 channel %d by %d dB to reach target %d dB\n", midi_chann, chann, (int)(db_diff * 100), (int)(target_db * 100));
+        printk("[midi tune %d] Adjusting M32 channel %d by %d mB to reach target %d mB\n", midi_chann, chann, (int)(db_diff * 100), (int)(target_db * 100));
+    channels_occupied[chann] = 1 << 7 | midi_chann; // mark channel as occupied by this MIDI channel
     m32_chann_ctrl(chann, "mix/fader", "f", db_to_fl(db_diff));
     m32_chann_ctrl(chann, "mix/on", "i", 1);
+    char chann_name[20];
+    sprintf(chann_name, "MIDI %d", midi_chann);
+    m32_chann_ctrl(chann, "config/name", "s", chann_name);
+    m32_chann_ctrl(chann, "config/color", "i", 1);
     ev.freq = 0;
     midi_apply(ev);
 }
@@ -303,7 +312,7 @@ void m32_prob()
 
     sleep_ms(100);
     float mapped = db_to_fl(-99);
-    printk("Mapped 0 dB to %d\n", (int8_t)(mapped * 100));
+    printk("Mapped 0 mB to %d\n", (int8_t)(mapped * 100));
     for (uint8_t i = 1; i < 9; i++)
     {
         m32_channel_init(i);
@@ -317,6 +326,7 @@ void m32_prob()
     // m32_set_fader(1, 0.8250);
 
     printk("UDP sent\n");
+    memset(channels_occupied, 0, sizeof(channels_occupied));
     for (uint8_t i = 0; i < 6; i++)
     {
         m32_midi_channel_tune(i, -20.0f);
@@ -339,6 +349,6 @@ void m32_prob()
     //         printk("Decoded message datas as strings:\n  '%s'\n  '%s'\n  '%s'\n  '%s'\n", buf + 8 + data[0], buf + 8 + data[1], buf + 8 + data[2], buf + 8 + data[3]);
     //         printk("Received UDP packet: '%s'\n", buf + 8);
     //     }
-    //     delay_ms(100);
+    //     sleep_ms(100);
     // }
 }
