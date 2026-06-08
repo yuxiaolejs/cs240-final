@@ -4,9 +4,9 @@
 #include "spi.h"
 #include <stdint.h>
 
-#define IP_ADDR "10.0.5.183"
+#define IP_ADDR "10.0.10.183"
 #define SUBNET "255.255.255.0"
-#define GATEWAY "10.0.5.1"
+#define GATEWAY "10.0.10.1"
 
 #define W5500_SOCK_BUF_SIZE 2048
 

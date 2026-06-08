@@ -4,11 +4,11 @@
 #include "midi.h"
 
 #define DEBUG_OSC 0
-#define DEFAULT_GAIN_DB 40.0f
+#define DEFAULT_GAIN_DB 50.0f
 
 #define M32_PORT 10023
-uint8_t dst_ip_src[4] = {10, 0, 5, 15};
-uint8_t dst_ip[4] = {10, 0, 5, 15};
+uint8_t dst_ip_src[4] = {10, 0, 10, 235};
+uint8_t dst_ip[4] = {10, 0, 10, 235};
 
 float fl_to_db(float value)
 {
@@ -247,15 +247,15 @@ float m32_get_meter(uint8_t fader_id)
 
 uint8_t channels_occupied[32] = {0};
 
-void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
+void m32_midi_channel_tune(uint8_t midi_chann, float target_db, uint32_t tune_base)
 {
-    printk("[midi tune %d] Tuning channel %d\n", midi_chann, midi_chann);
+    printk("[midi tune %d] ===== Tuning channel %d =====\n", midi_chann, midi_chann);
     midi_event ev;
     ev.channel = midi_chann;
-    ev.freq = 140;
+    ev.freq = tune_base;
     midi_apply(ev);
     // find m32 channel corresponding to midi
-    // if (midi_chann == 3)
+    // if (midi_chann == 0)
     // {
     //     while (1)
     //         sleep_ms(1000);
@@ -263,13 +263,16 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
     int chann = -1;
     float max_meter = -1000.0f;
     sleep_ms(500);
-    for (int i = 1; i <= 16; i++)
+    for (int i = 1; i <= 8; i++)
     {
         if (channels_occupied[i])
             continue;
         // printk("[midi tune %d] Checking M32 channel %d\n", midi_chann, i);
-        float meter = fl_to_db(m32_get_meter(i));
-        printk("[midi tune %d] M32 channel %d meter: %d mB\n", midi_chann, i, (int)(meter * 100));
+        float meter1 = fl_to_db(m32_get_meter(i));
+        float meter2 = fl_to_db(m32_get_meter(i));
+        float meter3 = fl_to_db(m32_get_meter(i));
+        float meter = (meter1 + meter2 + meter3) / 3.0f;
+        // printk("[midi tune %d] M32 channel %d meter: %d mB\n", midi_chann, i, (int)(meter * 100));
         if (meter > max_meter && meter > -70.0f) // require at least -70 dB to consider it a match
         {
             max_meter = meter;
@@ -353,7 +356,7 @@ void m32_prob()
     memset(channels_occupied, 0, sizeof(channels_occupied));
     for (uint8_t i = 0; i < 6; i++)
     {
-        m32_midi_channel_tune(i, -40.0f);
+        m32_midi_channel_tune(i, (i == 5 || i == 4) ? -25.0f : -35.0f, 180);
     }
     // uint8_t buf[2048];
     // char *types = kalloc(100);
