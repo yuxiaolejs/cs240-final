@@ -153,10 +153,11 @@ void notmain(void)
     midi_init();
     main_head = NULL;
     // head = make_floppy_inst(head, 24, 23);
+    main_head = make_floppy_inst(main_head, 0, 1);
     main_head = make_floppy_inst(main_head, 2, 3);
     main_head = make_floppy_inst(main_head, 4, 5);
     main_head = make_floppy_inst(main_head, 6, 7);
-    main_head = make_floppy_inst(main_head, 8, 9);
+    // main_head = make_floppy_inst(main_head, 8, 9);
     main_head = make_hbridge_inst(main_head, 12, 13);
     main_head = make_hbridge_inst(main_head, 16, 17);
     // head = make_floppy_inst(head, 19, 26);

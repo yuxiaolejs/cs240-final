@@ -4,6 +4,7 @@
 #include "midi.h"
 
 #define DEBUG_OSC 0
+#define DEFAULT_GAIN_DB 40.0f
 
 #define M32_PORT 10023
 uint8_t dst_ip_src[4] = {10, 0, 5, 15};
@@ -22,7 +23,7 @@ float fl_to_db(float value)
     else if (value <= 1.0)
         return -10 + (value - 0.5) / 0.5 * 20;
     else
-        return 0;
+        return 10;
 }
 
 float db_to_fl(float value)
@@ -38,7 +39,17 @@ float db_to_fl(float value)
     else if (value <= 10)
         return 0.5 * (value + 10) / 20 + 0.5;
     else
-        return 0;
+        return 1.0f;
+}
+
+float gain_db_to_fl(float gain_db)
+{
+    float val = (gain_db + 12.0f) / 72.0f;
+    if (val < 0.0f)
+        val = 0.0f;
+    else if (val > 1.0f)
+        val = 1.0f;
+    return val;
 }
 
 void m32_set_fader(uint8_t fader_id, float value)
@@ -149,7 +160,7 @@ void m32_channel_init(uint8_t chann)
     m32_chann_ctrl(chann, "preamp/trim", "f", 0.0f);
     m32_chann_ctrl(chann, "config/name", "s", "cs240lx");
     m32_chann_ctrl(chann, "config/color", "i", 2);
-    m32_headamp_ctrl(chann - 1, "gain", "f", 0.85f);
+    m32_headamp_ctrl(chann - 1, "gain", "f", gain_db_to_fl(DEFAULT_GAIN_DB));
     m32_headamp_ctrl(chann - 1, "phantom", "");
     uint8_t rdata[600], rpath[100], rtypes[100];
     m32_recv(rpath, rtypes, rdata);
@@ -244,6 +255,11 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
     ev.freq = 140;
     midi_apply(ev);
     // find m32 channel corresponding to midi
+    // if (midi_chann == 3)
+    // {
+    //     while (1)
+    //         sleep_ms(1000);
+    // }
     int chann = -1;
     float max_meter = -1000.0f;
     sleep_ms(500);
@@ -251,7 +267,7 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
     {
         if (channels_occupied[i])
             continue;
-        printk("[midi tune %d] Checking M32 channel %d\n", midi_chann, i);
+        // printk("[midi tune %d] Checking M32 channel %d\n", midi_chann, i);
         float meter = fl_to_db(m32_get_meter(i));
         printk("[midi tune %d] M32 channel %d meter: %d mB\n", midi_chann, i, (int)(meter * 100));
         if (meter > max_meter && meter > -70.0f) // require at least -70 dB to consider it a match
@@ -269,6 +285,14 @@ void m32_midi_channel_tune(uint8_t midi_chann, float target_db)
         return;
     }
     float db_diff = target_db - max_meter;
+    if (db_diff > 10)
+    {
+        float gain_comp = db_diff - 10;
+        if (gain_comp > 60)
+            gain_comp = 60;
+        m32_headamp_ctrl(chann - 1, "gain", "f", gain_db_to_fl(DEFAULT_GAIN_DB + gain_comp));
+        db_diff = 10;
+    }
     if (db_diff > 10 || db_diff < -90)
     {
         printk("[midi tune %d] Unreasonable target mB %d for MIDI channel %d with current meter %d, diff is %d\n", midi_chann, (int)(target_db * 100), midi_chann, (int)(max_meter * 100), (int)(db_diff * 100));
@@ -329,7 +353,7 @@ void m32_prob()
     memset(channels_occupied, 0, sizeof(channels_occupied));
     for (uint8_t i = 0; i < 6; i++)
     {
-        m32_midi_channel_tune(i, -20.0f);
+        m32_midi_channel_tune(i, -40.0f);
     }
     // uint8_t buf[2048];
     // char *types = kalloc(100);
